@@ -2,50 +2,237 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0f17">
-  <title>Car IOS AR</title>
+  <meta name="color-scheme" content="dark">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-title" content="Car AR">
+  <meta name="author" content="marufx86">
+  <meta name="description" content="Scan the cover with your iPhone or iPad and watch a 3D car appear in AR.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="3D Car in AR">
+  <meta property="og:description" content="Scan the cover with your iPhone or iPad and watch a 3D car appear in AR.">
+  <link rel="author" href="https://github.com/marufx86">
+  <title>3D Car in AR &middot; iPhone &amp; iPad</title>
   <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0f17;
+      --text: #f4f7fb;
+      --muted: #b4beca;
+      --dim: #8792a1;
+      --accent: #3ddcc3;
+      --amber: #ffc457;
+      --line: rgba(255, 255, 255, .11);
+      --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      --marker-h: 44vh;
+    }
+    @supports (height: 1svh) { :root { --marker-h: 44svh; } }
+
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: var(--bg); }
     body {
-      margin: 0; min-height: 100vh; background: #0b0f17; color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-      display: grid; place-items: center; padding: 24px;
+      margin: 0;
+      min-height: 100vh; min-height: 100dvh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+      padding:
+        max(20px, env(safe-area-inset-top))
+        max(16px, env(safe-area-inset-right))
+        max(8px, env(safe-area-inset-bottom))
+        max(16px, env(safe-area-inset-left));
+      background:
+        radial-gradient(900px 520px at 50% -8%, rgba(20, 184, 156, .22), transparent 70%),
+        linear-gradient(rgba(255, 255, 255, .03) 1px, transparent 1px) 0 0 / 36px 36px,
+        linear-gradient(90deg, rgba(255, 255, 255, .03) 1px, transparent 1px) 0 0 / 36px 36px,
+        var(--bg);
+      color: var(--text);
+      font: 400 16px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
+
     .card {
-      width: min(440px, 100%); text-align: center;
-      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
-      border-radius: 28px; padding: 22px; backdrop-filter: blur(20px);
-      box-shadow: 0 20px 70px rgba(0,0,0,.35);
+      width: min(560px, 100%);
+      display: grid; gap: 20px;
+      padding: 20px;
+      background: rgba(16, 22, 32, .72);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .45);
     }
-    .cover {
-      display: block; width: 100%; max-height: 62vh; object-fit: contain;
-      border-radius: 18px; margin-bottom: 18px;
+
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .brand {
+      display: inline-flex; align-items: center; gap: 8px;
+      font: 700 13px/1 var(--mono); letter-spacing: .16em;
     }
-    h1 { font-size: 25px; margin: 6px 0 8px; }
-    p { color: #aeb7c2; line-height: 1.5; margin: 0 0 20px; }
-    .ar-button {
-      display: block; padding: 16px 18px; border-radius: 16px;
-      background: #159c88; color: white; text-decoration: none;
-      font-weight: 700; font-size: 17px;
-      -webkit-tap-highlight-color: transparent;
+    .brand svg { width: 20px; height: 20px; color: var(--accent); }
+    .status {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, .04);
+      color: var(--muted); font: 600 11px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase;
     }
-    .ar-button img { width: 100%; display: block; border-radius: 12px; }
-    .hint { font-size: 13px; margin-top: 14px; color: #7f8a96; }
-    .android { display:none; }
-    @supports (padding: env(safe-area-inset-bottom)) {
-      body { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+    .dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--dim); }
+    .status[data-state="ready"] { color: var(--accent); border-color: rgba(61, 220, 195, .35); }
+    .status[data-state="ready"] .dot { background: var(--accent); box-shadow: 0 0 0 4px rgba(61, 220, 195, .18); }
+    .status[data-state="unsupported"] { color: #ffdca0; border-color: rgba(255, 196, 87, .38); }
+    .status[data-state="unsupported"] .dot { background: var(--amber); }
+
+    h1 { margin: 0 0 8px; font-size: clamp(32px, 9vw, 52px); line-height: 1.04; letter-spacing: -.03em; font-weight: 800; }
+    h1 em { font-style: normal; color: var(--accent); }
+    .spec { margin: 0; color: var(--dim); font: 500 12px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+
+    .stage { margin: 0; display: grid; justify-items: center; gap: 8px; }
+    .marker { position: relative; padding: 14px; }
+    .marker::before {
+      --c: var(--accent); --t: 3px; --l: 26px;
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background:
+        linear-gradient(var(--c), var(--c)) top left / var(--l) var(--t) no-repeat,
+        linear-gradient(var(--c), var(--c)) top left / var(--t) var(--l) no-repeat,
+        linear-gradient(var(--c), var(--c)) top right / var(--l) var(--t) no-repeat,
+        linear-gradient(var(--c), var(--c)) top right / var(--t) var(--l) no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom left / var(--l) var(--t) no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom left / var(--t) var(--l) no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom right / var(--l) var(--t) no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom right / var(--t) var(--l) no-repeat;
+      animation: scan 2.6s ease-in-out infinite;
+    }
+    @keyframes scan { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+
+    .ar-link { display: block; border-radius: 10px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    .ar-link img {
+      display: block; height: auto; border-radius: 10px;
+      width: min(100%, calc(var(--marker-h) * 1399 / 1779));
+      box-shadow: 0 18px 44px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .08);
+    }
+    figcaption { color: var(--dim); font: 500 11px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    figcaption a { color: var(--muted); text-underline-offset: 3px; }
+
+    .cta {
+      -webkit-appearance: none; appearance: none;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; min-height: 58px; padding: 0 20px; border: 0; border-radius: 16px;
+      background: linear-gradient(180deg, #0e8572, #0b6e60);
+      color: #fff; font: inherit; font-size: 18px; font-weight: 700; letter-spacing: .01em;
+      box-shadow: 0 10px 28px rgba(14, 133, 114, .38), inset 0 1px 0 rgba(255, 255, 255, .2);
+      cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+      transition: transform .12s ease, filter .12s ease;
+    }
+    .cta:active { transform: scale(.98); filter: brightness(.93); }
+    .cta svg { width: 24px; height: 24px; flex: none; }
+    .cta:focus-visible, .credit a:focus-visible, figcaption a:focus-visible { outline: 3px solid #fff; outline-offset: 3px; border-radius: 6px; }
+
+    .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+    .steps li {
+      counter-increment: step; display: grid; grid-template-columns: 30px 1fr; gap: 10px;
+      padding: 13px 0; border-top: 1px solid var(--line);
+      color: var(--muted); font-size: 16px; line-height: 1.4;
+    }
+    .steps li::before { content: "0" counter(step); color: var(--accent); font: 600 13px/1.6 var(--mono); letter-spacing: .04em; }
+    .steps b { color: var(--text); font-weight: 700; }
+
+    .credit { margin: 0; color: var(--dim); font-size: 14px; }
+    .credit a {
+      display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px;
+      color: var(--muted); font-weight: 600; text-decoration: none; touch-action: manipulation;
+    }
+    .credit a:hover { color: var(--text); }
+    .credit svg { width: 18px; height: 18px; }
+
+    @media (min-width: 900px) {
+      :root { --marker-h: min(68vh, 600px); }
+      .card {
+        width: min(1040px, 100%);
+        grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+        grid-template-rows: auto 1fr auto auto auto 1fr;
+        grid-template-areas: "bar bar" "stage ." "stage intro" "stage cta" "stage steps" "stage .";
+        column-gap: 44px; row-gap: 24px; padding: 32px 36px 36px;
+      }
+      .bar { grid-area: bar; }
+      .stage { grid-area: stage; align-self: center; }
+      .intro { grid-area: intro; }
+      .cta { grid-area: cta; }
+      .steps { grid-area: steps; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .marker::before { animation: none; }
+      .cta { transition: none; }
     }
   </style>
 </head>
 <body>
   <main class="card">
-    <!-- Apple Safari recognizes rel="ar" and opens AR Quick Look. -->
-    <a class="ar-button" rel="ar" href="./Car-final.reality">
-      <img src="./book-cover.jpg" alt="View this experience in AR">
-    </a>
+    <div class="bar">
+      <span class="brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2.5 3.5 7.2v9.6l8.5 4.7 8.5-4.7V7.2L12 2.5Z"/><path d="M3.5 7.2 12 12l8.5-4.8M12 12v9.5"/>
+        </svg>
+        AR/VR
+      </span>
+      <span class="status" id="status" role="status"><i class="dot"></i><span id="status-text">iPhone &amp; iPad</span></span>
+    </div>
 
-    <div class="hint">If you are on iPhone/iPad, tap the image above.</div>
+    <header class="intro">
+      <h1>3D Car in <em>AR</em></h1>
+      <p class="spec">Image tracking &middot; AR Quick Look</p>
+    </header>
+
+    <figure class="stage">
+      <div class="marker">
+        <!-- Safari on iPhone/iPad recognizes rel="ar" and opens AR Quick Look. The img must be the anchor's first child.
+             This image is also the AR marker baked into Car-final.reality, so keep its pixels unchanged. -->
+        <a class="ar-link" rel="ar" href="./Car-final.reality">
+          <img src="./book-cover.jpg" width="1399" height="1779" fetchpriority="high"
+               alt="AR marker. Tap to open the 3D car in AR.">
+        </a>
+      </div>
+      <figcaption>AR marker &middot; <a href="./book-cover.jpg">Full size</a></figcaption>
+    </figure>
+
+    <button class="cta" id="launch" type="button" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2.5 3.5 7.2v9.6l8.5 4.7 8.5-4.7V7.2L12 2.5Z"/><path d="M3.5 7.2 12 12l8.5-4.8M12 12v9.5"/>
+      </svg>
+      Open in AR
+    </button>
+
+    <ol class="steps">
+      <li><span>Show the <b>cover</b> on a second screen, or print it <b>12&nbsp;cm</b> wide.</span></li>
+      <li><span>On iPhone or iPad, tap <b>Open in AR</b>.</span></li>
+      <li><span>Aim the camera at the <b>cover</b>. The car appears.</span></li>
+    </ol>
   </main>
+
+  <footer class="credit">
+    Built by
+    <a href="https://github.com/marufx86" target="_blank" rel="author noopener">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      marufx86
+    </a>
+  </footer>
+
+  <script>
+    (function () {
+      var link = document.querySelector('a[rel~="ar"]');
+      var launch = document.getElementById('launch');
+      var status = document.getElementById('status');
+      var supported = false;
+      try { supported = link.relList.supports('ar'); } catch (e) {}
+
+      status.dataset.state = supported ? 'ready' : 'unsupported';
+      document.getElementById('status-text').textContent = supported ? 'AR ready' : 'Needs iPhone or iPad';
+
+      if (supported) {
+        launch.hidden = false;
+        launch.addEventListener('click', function () { link.click(); });
+      } else {
+        link.addEventListener('click', function (e) { e.preventDefault(); });
+      }
+    })();
+  </script>
 </body>
 </html>
