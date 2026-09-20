@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f17">
+  <title>Car IOS AR</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: #0b0f17; color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      display: grid; place-items: center; padding: 24px;
+    }
+    .card {
+      width: min(440px, 100%); text-align: center;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 28px; padding: 22px; backdrop-filter: blur(20px);
+      box-shadow: 0 20px 70px rgba(0,0,0,.35);
+    }
+    .cover {
+      display: block; width: 100%; max-height: 62vh; object-fit: contain;
+      border-radius: 18px; margin-bottom: 18px;
+    }
+    h1 { font-size: 25px; margin: 6px 0 8px; }
+    p { color: #aeb7c2; line-height: 1.5; margin: 0 0 20px; }
+    .ar-button {
+      display: block; padding: 16px 18px; border-radius: 16px;
+      background: #159c88; color: white; text-decoration: none;
+      font-weight: 700; font-size: 17px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ar-button img { width: 100%; display: block; border-radius: 12px; }
+    .hint { font-size: 13px; margin-top: 14px; color: #7f8a96; }
+    .android { display:none; }
+    @supports (padding: env(safe-area-inset-bottom)) {
+      body { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <!-- Apple Safari recognizes rel="ar" and opens AR Quick Look. -->
+    <a class="ar-button" rel="ar" href="./Car-final.reality">
+      <img src="./book-cover.jpg" alt="View this experience in AR">
+    </a>
+
+    <div class="hint">If you are on iPhone/iPad, tap the image above.</div>
+  </main>
+</body>
+</html>
